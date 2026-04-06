@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disease Prediction System</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="glass-bg"></div>
+
+    <div class="container">
+        <header>
+            <div class="logo-icon">🧬</div>
+            <h1>Diabetes Risk Predictor</h1>
+            <p>Enter your patient vitals to evaluate disease risk automatically using advanced machine learning.</p>
+        </header>
+
+        <main>
+            <div class="form-card glass-panel">
+                <form id="prediction-form">
+                    <div class="input-group">
+                        <label for="age">Age (years)</label>
+                        <input type="number" id="age" name="age" required min="1" max="120" placeholder="e.g. 45">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="bp">Blood Pressure (mmHg)</label>
+                        <input type="number" id="bp" name="bp" required min="40" max="250" placeholder="e.g. 80">
+                        <small>Diastolic blood pressure</small>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="glucose">Glucose Level (mg/dL)</label>
+                        <input type="number" id="glucose" name="glucose" required min="1" max="400" placeholder="e.g. 110">
+                        <small>2-hour oral glucose tolerance test</small>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="bmi">BMI</label>
+                        <input type="number" id="bmi" name="bmi" step="0.1" required min="10" max="80" placeholder="e.g. 28.5">
+                        <small>Body mass index (weight in kg/(height in m)^2)</small>
+                    </div>
+
+                    <button type="submit" id="submit-btn">
+                        <span>Analyze Risk</span>
+                        <div class="loader" id="loader"></div>
+                    </button>
+                </form>
+            </div>
+
+            <div class="result-card glass-panel hidden" id="result-container">
+                <h2>Diagnostic Result</h2>
+                <div class="risk-badge" id="risk-badge">
+                    Evaluating...
+                </div>
+                <div class="prob-bar-container">
+                    <p>Calculated Probability: <strong id="prob-percentage">0%</strong></p>
+                    <div class="prob-bar-track">
+                        <div class="prob-bar-fill" id="prob-bar" style="width: 0%;"></div>
+                    </div>
+                </div>
+                <p class="disclaimer">
+                    <strong>Disclaimer:</strong> This tool is for educational purposes and provides estimates based on ML models. Always seek professional medical advice.
+                </p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const form = document.getElementById('prediction-form');
+        const submitBtn = document.getElementById('submit-btn');
+        const loader = document.getElementById('loader');
+        const resultContainer = document.getElementById('result-container');
+        const riskBadge = document.getElementById('risk-badge');
+        const probPercentage = document.getElementById('prob-percentage');
+        const probBar = document.getElementById('prob-bar');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // UI State updates
+            submitBtn.classList.add('loading');
+            resultContainer.classList.add('hidden');
+            riskBadge.className = 'risk-badge'; // reset
+            
+            // Gather data
+            const payload = {
+                age: document.getElementById('age').value,
+                bp: document.getElementById('bp').value,
+                glucose: document.getElementById('glucose').value,
+                bmi: document.getElementById('bmi').value
+            };
+
+            try {
+                // Fetch to flask api
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult(data.risk, data.probability);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                console.error(error);
+                alert('An error occurred contacting the server.');
+            } finally {
+                submitBtn.classList.remove('loading');
+            }
+        });
+
+        function showResult(risk, probability) {
+            resultContainer.classList.remove('hidden');
+            probPercentage.textContent = probability + '%';
+            
+            // Animate bar
+            setTimeout(() => {
+                probBar.style.width = probability + '%';
+            }, 100);
+
+            if (risk === 'Yes') {
+                riskBadge.textContent = 'High Risk of Diabetes Detected';
+                riskBadge.classList.add('high-risk');
+                probBar.style.background = 'linear-gradient(90deg, #ff416c 0%, #ff4b2b 100%)';
+            } else {
+                riskBadge.textContent = 'Minimal Risk Detected';
+                riskBadge.classList.add('low-risk');
+                probBar.style.background = 'linear-gradient(90deg, #11998e 0%, #38ef7d 100%)';
+            }
+        }
+    </script>
+</body>
+</html>
