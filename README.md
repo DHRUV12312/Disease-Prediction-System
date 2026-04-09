@@ -1,6 +1,9 @@
-# 🩺 Disease Prediction System
+# 🩺 Disease Prediction System  
 
 A machine learning-powered web application that predicts **diabetes risk** based on patient health metrics. Built with **Flask**, **scikit-learn**, and a modern glassmorphism UI.
+
+
+https://disease-prediction-system-ys3y.onrender.com/
 
 ![Python](https://img.shields.io/badge/Python-3.8+-blue?logo=python)
 ![Flask](https://img.shields.io/badge/Flask-2.x-green?logo=flask)
